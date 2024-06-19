@@ -1,3 +1,4 @@
+from django.db.models import Count, Sum
 from rest_framework import viewsets, permissions
 from datetime import datetime
 from rest_framework.response import Response
@@ -30,13 +31,24 @@ class SummaryViewSet(viewsets.ViewSet):
     def daily(self, request):
         date_str = request.query_params.get('date', datetime.now().strftime('%Y-%m-%d'))
         date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
         records = TaskRecord.objects.filter(user=request.user, date_completed=date)
-        total_time = sum(record.time_spent for record in records)
+
+        # Aggregation for total time spent
+        total_time = records.aggregate(total_time=Sum('time_spent'))['total_time'] or 0
+
+        # Aggregation for priority count
+        priority_counts = records.values('task__priority').annotate(count=Count('task__priority'))
+
         priorities = {
-            'low': records.filter(task__priority='low').count(),
-            'medium': records.filter(task__priority='medium').count(),
-            'high': records.filter(task__priority='high').count(),
+            'low': 0,
+            'medium': 0,
+            'high': 0,
         }
+
+        for item in priority_counts:
+            priorities[item['task__priority']] = item['count']
+
         summary = {
             'total_tasks': records.count(),
             'total_time_spent': total_time,
