@@ -23,26 +23,23 @@ class TaskRecordViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-class SummaryViewSet(viewsets.ModelViewSet):
+class SummaryViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     @action(detail=False, methods=['get'])
     def daily(self, request):
         date_str = request.query_params.get('date', datetime.now().strftime('%Y-%m-%d'))
         date = datetime.strptime(date_str, '%Y-%m-%d').date()
-
-        records = TaskRecord.objects.filter(user=request.user, date_comleted=date)
+        records = TaskRecord.objects.filter(user=request.user, date_completed=date)
         total_time = sum(record.time_spent for record in records)
-
         priorities = {
             'low': records.filter(task__priority='low').count(),
             'medium': records.filter(task__priority='medium').count(),
             'high': records.filter(task__priority='high').count(),
         }
-
         summary = {
             'total_tasks': records.count(),
-            'total_time': total_time,
+            'total_time_spent': total_time,
             'priorities': priorities,
         }
 

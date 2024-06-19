@@ -25,7 +25,7 @@ class TaskItem(models.Model):
 class TaskRecord(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     task = models.ForeignKey(TaskItem, on_delete=models.CASCADE)
-    date_completed = models.DateTimeField()
+    date_completed = models.DateField()
     time_spent = models.PositiveIntegerField(help_text='Time spent in minutes')
 
     def __str__(self):
